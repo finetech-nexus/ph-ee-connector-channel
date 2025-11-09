@@ -561,8 +561,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     variables.put(PARTY_ID_TYPE, channelRequest.getIdType().name());
                     variables.put(PARTY_ID, channelRequest.getIdValue());
                     variables.put(ACCOUNT, channelRequest.getAccountId());
+                    String bpmn = getWorkflowForTenant(tenantId, "outbound-transfer-request");
                     String tenantSpecificBpmn = partyRegistration.replace("{dfspid}", tenantId);
-
+                    logger.info(objectMapper.writeValueAsString(channelRequest));
+                    logger.info(objectMapper.writeValueAsString(variables));
+                    logger.info(objectMapper.writeValueAsString(tenantSpecificBpmn));
                     zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn, objectMapper.writeValueAsString(channelRequest), variables);
                 }).setBody(constant((Object) null));
     }
