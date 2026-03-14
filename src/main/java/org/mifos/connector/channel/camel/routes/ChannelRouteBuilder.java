@@ -347,11 +347,17 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("clientCorrelationId", clientCorrelationId);
                     extraVariables.put("initiatorFspId", channelRequest.getPayer().getPartyIdInfo().getFspId());
                     extraVariables.put("destinationFspId", channelRequest.getPayee().getPartyIdInfo().getFspId());
+                    extraVariables.put("payeeTenantId", channelRequest.getPayee().getPartyIdInfo().getFspId());
+                    extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayee().getPartyIdInfo().getPartyIdType());
+                    extraVariables.put(PARTY_ID, channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier());
+
+
+
                     String tenantSpecificBpmn;
                     String bpmn = getWorkflowForTenant(tenantId, "payment-transfer");
-                    if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {
-                        tenantSpecificBpmn = bpmn.equals("default") ? specialPaymentTransferFlow.replace("{dfspid}", tenantId)
-                                : bpmn.replace("{dfspid}", tenantId);
+                    if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier()!=null && channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().equals(channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier())) {
+                        //tenantSpecificBpmn = bpmn.equals("default") ? specialPaymentTransferFlow.replace("{dfspid}", tenantId)  : bpmn.replace("{dfspid}", tenantId);
+                        tenantSpecificBpmn= specialPaymentTransferFlow.replace("{dfspid}", tenantId);
                         extraVariables.put("specialTermination", true);
                     } else {
                         tenantSpecificBpmn = bpmn.equals("default") ? paymentTransferFlow.replace("{dfspid}", tenantId)
