@@ -17,3 +17,8 @@ Use below command to execute the spotless apply.
 ```shell
 ./gradlew spotlessApply
 ```
+docker buildx build \
+--platform linux/amd64,linux/arm64 \
+-t nexusbank/ph-ee-connector-channel:1.11.0  \
+-f Dockerfile \
+--push \
