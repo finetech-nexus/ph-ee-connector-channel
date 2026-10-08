@@ -3,18 +3,26 @@ on: [push, pull_request]
 jobs:
   Assemble:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: master
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: master
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: openmf/ph-ee-connector-integration-test
           path: ph-ee-connector-integration-test
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
       - name: Assemble project
-        run: ./gradlew clean build
+        run: ./gradlew clean build --no-daemon
       - name: Build Docker image
         run: docker build . -t paymenthubee.mifos.io/phee/connector-channel
       
