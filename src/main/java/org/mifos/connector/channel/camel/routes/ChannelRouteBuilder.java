@@ -796,11 +796,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         }
         vars.put(PAYMENT_SCHEME, scheme);
         if (request.getPayer() != null && request.getPayer().getPartyIdInfo() != null) {
-            vars.put("debtorAccount", request.getPayer().getPartyIdInfo().getPartyIdentifier());
+            vars.put("debtorAccount", railAccount(scheme, request.getPayer().getPartyIdInfo().getPartyIdentifier()));
             vars.put("debtorName", request.getPayer().getName());
         }
         if (request.getPayee() != null && request.getPayee().getPartyIdInfo() != null) {
-            vars.put("creditorAccount", request.getPayee().getPartyIdInfo().getPartyIdentifier());
+            vars.put("creditorAccount", railAccount(scheme, request.getPayee().getPartyIdInfo().getPartyIdentifier()));
             vars.put("creditorName", request.getPayee().getName());
         }
         if (request.getNote() != null) {
@@ -833,6 +833,18 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
             processId = "mt-card-payment-{dfspid}";
         }
         return processId.replace("{dfspid}", tenantId);
+    }
+
+    /** SIBTEL clears a 20-digit RIB. A Tunisian IBAN is {@code TN} + 2 check digits + that RIB. */
+    private static String railAccount(String scheme, String identifier) {
+        if (identifier == null || !"sibtel".equals(scheme)) {
+            return identifier;
+        }
+        String compact = identifier.replaceAll("\\s", "").toUpperCase();
+        if (compact.startsWith("TN") && compact.length() == 24) {
+            return compact.substring(4);
+        }
+        return compact;
     }
 
     private String getCollectionPaymentScheme(String paymentSchemeHeaderValue) {
