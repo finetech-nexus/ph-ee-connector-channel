@@ -64,8 +64,8 @@ import org.mifos.connector.common.camel.AuthProperties;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.connector.common.gsma.dto.CustomData;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
+import org.mifos.connector.common.gsma.dto.CustomData;
 import org.mifos.connector.common.gsma.dto.GsmaTransfer;
 import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
@@ -361,9 +361,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     if (railBpmn != null) {
                         tenantSpecificBpmn = railBpmn;
                         extraVariables.put("specialTermination", false);
-                    } else if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier()!=null && channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().equals(channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier())) {
+                    } else if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier() != null && channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().equals(channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier())) {
                         //tenantSpecificBpmn = bpmn.equals("default") ? specialPaymentTransferFlow.replace("{dfspid}", tenantId)  : bpmn.replace("{dfspid}", tenantId);
-                        tenantSpecificBpmn= specialPaymentTransferFlow.replace("{dfspid}", tenantId);
+                        tenantSpecificBpmn = specialPaymentTransferFlow.replace("{dfspid}", tenantId);
                         extraVariables.put("specialTermination", true);
                     } else {
                         tenantSpecificBpmn = bpmn.equals("default") ? paymentTransferFlow.replace("{dfspid}", tenantId)
