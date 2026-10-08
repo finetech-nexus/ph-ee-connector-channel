@@ -64,6 +64,7 @@ import org.mifos.connector.common.camel.AuthProperties;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.gsma.dto.CustomData;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
 import org.mifos.connector.common.gsma.dto.GsmaTransfer;
 import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
@@ -354,8 +355,13 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
 
                     String tenantSpecificBpmn;
+                    String railBpmn = tunisiaRailBpmn(exchange.getIn().getHeader(PAYMENT_SCHEME_HEADER, String.class), channelRequest,
+                            extraVariables, tenantId);
                     String bpmn = getWorkflowForTenant(tenantId, "payment-transfer");
-                    if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier()!=null && channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().equals(channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier())) {
+                    if (railBpmn != null) {
+                        tenantSpecificBpmn = railBpmn;
+                        extraVariables.put("specialTermination", false);
+                    } else if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier()!=null && channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().equals(channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier())) {
                         //tenantSpecificBpmn = bpmn.equals("default") ? specialPaymentTransferFlow.replace("{dfspid}", tenantId)  : bpmn.replace("{dfspid}", tenantId);
                         tenantSpecificBpmn= specialPaymentTransferFlow.replace("{dfspid}", tenantId);
                         extraVariables.put("specialTermination", true);
@@ -773,6 +779,59 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
             }
         }
         return "default";
+    }
+
+    /**
+     * Routes {@code X-Payment-Scheme: swift|sibtel|mt} to the Tunisia rail BPMN.
+     * Other schemes keep the existing payer fund-transfer process.
+     */
+    private String tunisiaRailBpmn(String schemeHeader, TransactionChannelRequestDTO request, Map<String, Object> vars, String tenantId) {
+        if (schemeHeader == null || schemeHeader.isBlank()) {
+            return null;
+        }
+        String scheme = schemeHeader.trim().toLowerCase();
+        if (!scheme.equals("swift") && !scheme.equals("sibtel") && !scheme.equals("mt")) {
+            return null;
+        }
+        vars.put(PAYMENT_SCHEME, scheme);
+        if (request.getPayer() != null && request.getPayer().getPartyIdInfo() != null) {
+            vars.put("debtorAccount", request.getPayer().getPartyIdInfo().getPartyIdentifier());
+            vars.put("debtorName", request.getPayer().getName());
+        }
+        if (request.getPayee() != null && request.getPayee().getPartyIdInfo() != null) {
+            vars.put("creditorAccount", request.getPayee().getPartyIdInfo().getPartyIdentifier());
+            vars.put("creditorName", request.getPayee().getName());
+        }
+        if (request.getNote() != null) {
+            vars.put("narrative", request.getNote());
+        }
+        if (request.getAmount() != null) {
+            vars.put("amount", request.getAmount().getAmount());
+            vars.put("currency", request.getAmount().getCurrency());
+        }
+        String operation = null;
+        if (request.getCustomData() != null) {
+            for (CustomData item : request.getCustomData()) {
+                if (item == null || item.getKey() == null) {
+                    continue;
+                }
+                vars.put(item.getKey(), item.getValue());
+                if ("operation".equals(item.getKey()) && item.getValue() != null) {
+                    operation = String.valueOf(item.getValue());
+                }
+            }
+        }
+        String processId;
+        if ("swift".equals(scheme)) {
+            processId = "swift-international-transfer-{dfspid}";
+        } else if ("sibtel".equals(scheme)) {
+            processId = "sibtel-domestic-transfer-{dfspid}";
+        } else if ("refund".equalsIgnoreCase(operation)) {
+            processId = "mt-card-refund-{dfspid}";
+        } else {
+            processId = "mt-card-payment-{dfspid}";
+        }
+        return processId.replace("{dfspid}", tenantId);
     }
 
     private String getCollectionPaymentScheme(String paymentSchemeHeaderValue) {
