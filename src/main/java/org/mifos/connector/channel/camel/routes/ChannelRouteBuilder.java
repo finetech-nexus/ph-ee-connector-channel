@@ -352,8 +352,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayee().getPartyIdInfo().getPartyIdType());
                     extraVariables.put(PARTY_ID, channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier());
 
-
-
                     String tenantSpecificBpmn;
                     String railBpmn = tunisiaRailBpmn(exchange.getIn().getHeader(PAYMENT_SCHEME_HEADER, String.class), channelRequest,
                             extraVariables, tenantId);
@@ -361,8 +359,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     if (railBpmn != null) {
                         tenantSpecificBpmn = railBpmn;
                         extraVariables.put("specialTermination", false);
-                    } else if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier() != null && channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().equals(channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier())) {
-                        //tenantSpecificBpmn = bpmn.equals("default") ? specialPaymentTransferFlow.replace("{dfspid}", tenantId)  : bpmn.replace("{dfspid}", tenantId);
+                    } else if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier() != null
+                            && channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier()
+                                    .equals(channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier())) {
+                        // tenantSpecificBpmn = bpmn.equals("default") ? specialPaymentTransferFlow.replace("{dfspid}",
+                        // tenantId) : bpmn.replace("{dfspid}", tenantId);
                         tenantSpecificBpmn = specialPaymentTransferFlow.replace("{dfspid}", tenantId);
                         extraVariables.put("specialTermination", true);
                     } else {
@@ -782,8 +783,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     /**
-     * Routes {@code X-Payment-Scheme: swift|sibtel|mt} to the Tunisia rail BPMN.
-     * Other schemes keep the existing payer fund-transfer process.
+     * Routes {@code X-Payment-Scheme: swift|sibtel|mt} to the Tunisia rail BPMN. Other schemes keep the existing payer
+     * fund-transfer process.
      */
     private String tunisiaRailBpmn(String schemeHeader, TransactionChannelRequestDTO request, Map<String, Object> vars, String tenantId) {
         if (schemeHeader == null || schemeHeader.isBlank()) {
