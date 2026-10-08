@@ -6,7 +6,7 @@ name: Build and push image
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
     paths:
       - '**.java'
       - 'build.gradle'
