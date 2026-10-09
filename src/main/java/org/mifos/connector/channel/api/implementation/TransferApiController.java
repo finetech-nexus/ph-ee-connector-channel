@@ -3,6 +3,7 @@ package org.mifos.connector.channel.api.implementation;
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.PAYEE_DFSP_ID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
 import static org.mifos.connector.channel.camel.config.CamelProperties.REGISTERING_INSTITUTION_ID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,10 +36,10 @@ public class TransferApiController implements TransferApi {
 
     @Override
     public GsmaP2PResponseDto transfer(String tenant, String batchId, String correlationId, String registeringInstitutionId,
-            String payeeDfspId, TransactionChannelRequestDTO requestBody) throws JsonProcessingException {
+            String payeeDfspId, String paymentScheme, TransactionChannelRequestDTO requestBody) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", tenant).addHeader(BATCH_ID, batchId)
                 .addHeader(CLIENTCORRELATIONID, correlationId).addHeader(REGISTERING_INSTITUTION_ID, registeringInstitutionId)
-                .addHeader(PAYEE_DFSP_ID, payeeDfspId).build();
+                .addHeader(PAYEE_DFSP_ID, payeeDfspId).addHeader(PAYMENT_SCHEME_HEADER, paymentScheme).build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(requestBody));
         logger.info("Client correlation id: " + correlationId);

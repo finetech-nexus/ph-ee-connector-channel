@@ -3,6 +3,7 @@ package org.mifos.connector.channel.api.definition;
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID_HEADER;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.PAYEE_DFSP_ID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
 import static org.mifos.connector.channel.camel.config.CamelProperties.REGISTERING_INSTITUTION_ID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,6 +24,7 @@ public interface TransferApi {
             @RequestHeader(value = CLIENTCORRELATIONID, required = false) String correlationId,
             @RequestHeader(value = REGISTERING_INSTITUTION_ID, required = false) String registeringInstitutionId,
             @RequestHeader(value = PAYEE_DFSP_ID, required = false) String payeeDfspId,
+            @RequestHeader(value = PAYMENT_SCHEME_HEADER, required = false) String paymentScheme,
             @RequestBody TransactionChannelRequestDTO requestBody) throws JsonProcessingException;
 
     @GetMapping("/channel/transfer/{transactionId}")

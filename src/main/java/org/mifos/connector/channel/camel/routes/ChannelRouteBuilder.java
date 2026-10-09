@@ -68,6 +68,7 @@ import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
 import org.mifos.connector.common.gsma.dto.CustomData;
 import org.mifos.connector.common.gsma.dto.GsmaTransfer;
 import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
+import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.slf4j.Logger;
@@ -330,8 +331,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
                     channelRequest.getPayer().getPartyIdInfo().setFspId(tenantId);
+                    String scheme = resolveOutboundScheme(exchange.getIn().getHeader(PAYMENT_SCHEME_HEADER, String.class), channelRequest);
+                    if ("sibtel".equals(scheme)) {
+                        applySibtelCurrency(channelRequest);
+                    }
                     if (payeeDfspId == null || payeeDfspId.isBlank()) {
-                        channelRequest.getPayee().getPartyIdInfo().setFspId(destinationDfspId);
+                        channelRequest.getPayee().getPartyIdInfo().setFspId("sibtel".equals(scheme) ? "sibtel" : destinationDfspId);
                     } else {
                         channelRequest.getPayee().getPartyIdInfo().setFspId(payeeDfspId);
                     }
@@ -353,8 +358,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(PARTY_ID, channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier());
 
                     String tenantSpecificBpmn;
-                    String railBpmn = tunisiaRailBpmn(exchange.getIn().getHeader(PAYMENT_SCHEME_HEADER, String.class), channelRequest,
-                            extraVariables, tenantId);
+                    String railBpmn = tunisiaRailBpmn(scheme, channelRequest, extraVariables, tenantId);
                     String bpmn = getWorkflowForTenant(tenantId, "payment-transfer");
                     if (railBpmn != null) {
                         tenantSpecificBpmn = railBpmn;
@@ -783,8 +787,59 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     /**
-     * Routes {@code X-Payment-Scheme: swift|sibtel|mt} to the Tunisia rail BPMN. Other schemes keep the existing payer
-     * fund-transfer process.
+     * An explicit scheme wins. With no header, two Tunisian IBANs at different banks clear on SIBTEL.
+     */
+    private String resolveOutboundScheme(String schemeHeader, TransactionChannelRequestDTO request) {
+        if (schemeHeader != null && !schemeHeader.isBlank()) {
+            return schemeHeader.trim().toLowerCase();
+        }
+        if (differentTunisianBanks(request)) {
+            logger.info("## CHANNEL inferred payment scheme sibtel from Tunisian IBAN bank codes");
+            return "sibtel";
+        }
+        return null;
+    }
+
+    /** SIBTEL domestic clearing accepts TND only. */
+    private void applySibtelCurrency(TransactionChannelRequestDTO request) {
+        if (request.getAmount() == null) {
+            return;
+        }
+        String currency = request.getAmount().getCurrency();
+        if (currency == null || !currency.equalsIgnoreCase("TND")) {
+            logger.info("## CHANNEL SIBTEL clears TND; overriding currency {}", currency);
+            request.getAmount().setCurrency("TND");
+        }
+    }
+
+    /** Tunisian IBAN is {@code TN} + 2 check digits + a 20-digit RIB. The RIB starts with the 2-digit bank code. */
+    private static boolean differentTunisianBanks(TransactionChannelRequestDTO request) {
+        String payerBank = tunisianBankCode(partyIdentifier(request == null ? null : request.getPayer()));
+        String payeeBank = tunisianBankCode(partyIdentifier(request == null ? null : request.getPayee()));
+        return payerBank != null && payeeBank != null && !payerBank.equals(payeeBank);
+    }
+
+    private static String partyIdentifier(Party party) {
+        if (party == null || party.getPartyIdInfo() == null) {
+            return null;
+        }
+        return party.getPartyIdInfo().getPartyIdentifier();
+    }
+
+    private static String tunisianBankCode(String identifier) {
+        if (identifier == null) {
+            return null;
+        }
+        String compact = identifier.replaceAll("\\s", "").toUpperCase();
+        if (!compact.startsWith("TN") || compact.length() != 24) {
+            return null;
+        }
+        return compact.substring(4, 6);
+    }
+
+    /**
+     * Routes {@code swift|sibtel|mt} to the Tunisia rail BPMN. Other schemes keep the existing payer fund-transfer
+     * process.
      */
     private String tunisiaRailBpmn(String schemeHeader, TransactionChannelRequestDTO request, Map<String, Object> vars, String tenantId) {
         if (schemeHeader == null || schemeHeader.isBlank()) {
