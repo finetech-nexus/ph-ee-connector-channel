@@ -875,15 +875,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
             }
         }
         String operation = null;
-        if (rail && request.getCustomData() != null) {
-            for (CustomData item : request.getCustomData()) {
-                if (item == null || item.getKey() == null) {
-                    continue;
-                }
-                vars.put(item.getKey(), item.getValue());
-                if ("operation".equals(item.getKey()) && item.getValue() != null) {
-                    operation = String.valueOf(item.getValue());
-                }
+        CustomData item = request.getCustomData();
+        if (rail && item != null && item.getKey() != null) {
+            vars.put(item.getKey(), item.getValue());
+            if ("operation".equals(item.getKey()) && item.getValue() != null) {
+                operation = String.valueOf(item.getValue());
             }
         }
         String processId;
