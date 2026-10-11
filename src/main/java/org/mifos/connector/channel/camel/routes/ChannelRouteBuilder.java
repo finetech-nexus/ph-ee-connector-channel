@@ -870,7 +870,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 vars.put("narrative", request.getNote());
             }
             if (request.getAmount() != null) {
-                vars.put("amount", request.getAmount().getAmount());
                 vars.put("currency", request.getAmount().getCurrency());
             }
         }
