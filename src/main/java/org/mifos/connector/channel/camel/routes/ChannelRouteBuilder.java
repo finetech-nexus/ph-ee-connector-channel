@@ -354,8 +354,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("initiatorFspId", channelRequest.getPayer().getPartyIdInfo().getFspId());
                     extraVariables.put("destinationFspId", channelRequest.getPayee().getPartyIdInfo().getFspId());
                     extraVariables.put("payeeTenantId", channelRequest.getPayee().getPartyIdInfo().getFspId());
-                    extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayee().getPartyIdInfo().getPartyIdType());
-                    extraVariables.put(PARTY_ID, channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier());
+                    if ("sibtel".equals(scheme)) {
+                        extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayer().getPartyIdInfo().getPartyIdType());
+                        extraVariables.put(PARTY_ID, channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier());
+                        logger.info("## CHANNEL SIBTEL payer lookup {} at {}", channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier(),
+                                tenantId);
+                    } else {
+                        extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayee().getPartyIdInfo().getPartyIdType());
+                        extraVariables.put(PARTY_ID, channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier());
+                    }
 
                     String tenantSpecificBpmn;
                     String railBpmn = tunisiaRailBpmn(scheme, channelRequest, extraVariables, tenantId);
@@ -376,6 +383,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         extraVariables.put("specialTermination", false);
                     }
 
+                    logger.info("## CHANNEL BPMN {} scheme {} payeeFsp {} specialTermination {}", tenantSpecificBpmn, scheme,
+                            channelRequest.getPayee().getPartyIdInfo().getFspId(), extraVariables.get("specialTermination"));
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest), extraVariables);
                     JSONObject response = new JSONObject();

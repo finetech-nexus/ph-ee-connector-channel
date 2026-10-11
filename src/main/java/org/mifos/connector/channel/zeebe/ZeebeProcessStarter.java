@@ -39,7 +39,7 @@ public class ZeebeProcessStarter {
             variables.putAll(extraVariables);
         }
 
-        logger.info("starting workflow HERE:");
+        logger.info("## CHANNEL starting BPMN {}", workflowId);
         // TODO if successful transfer response arrives in X timeout return it otherwise do callback
         try {
             ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
@@ -65,7 +65,7 @@ public class ZeebeProcessStarter {
             variables.putAll(extraVariables);
         }
 
-        logger.info("starting workflow HERE:");
+        logger.info("## CHANNEL starting BPMN {}", workflowId);
         // TODO if successful transfer response arrives in X timeout return it otherwise do callback
         try {
             ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
@@ -114,7 +114,7 @@ public class ZeebeProcessStarter {
         variables.put(ZeebeVariables.TRANSACTION_ID, transactionId);
         variables.put(ZeebeVariables.ORIGIN_DATE, Instant.now().toEpochMilli());
 
-        logger.info("starting workflow HERE:");
+        logger.info("## CHANNEL starting BPMN {}", workflowId);
         try {
             ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
                     .variables(variables).send().join();
