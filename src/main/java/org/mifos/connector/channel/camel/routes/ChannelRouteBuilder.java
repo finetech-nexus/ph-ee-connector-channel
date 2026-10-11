@@ -357,8 +357,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     if ("sibtel".equals(scheme)) {
                         extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayer().getPartyIdInfo().getPartyIdType());
                         extraVariables.put(PARTY_ID, channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier());
-                        logger.info("## CHANNEL SIBTEL payer lookup {} at {}", channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier(),
-                                tenantId);
+                        logger.info("## CHANNEL SIBTEL payer lookup {} at {}",
+                                channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier(), tenantId);
                     } else {
                         extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayee().getPartyIdInfo().getPartyIdType());
                         extraVariables.put(PARTY_ID, channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier());
