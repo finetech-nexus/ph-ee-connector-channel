@@ -838,35 +838,35 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     /**
-     * Routes {@code swift|sibtel|mt} to the Tunisia rail BPMN. Other schemes keep the existing payer fund-transfer
-     * process.
+     * Picks the transfer BPMN. SIBTEL, SWIFT, and MT use their rail processes. A transfer that stays on this DFSP
+     * (nexusbank to nexusbank) uses {@code internal_transfer}. Anything else keeps the payer fund-transfer process.
      */
     private String tunisiaRailBpmn(String schemeHeader, TransactionChannelRequestDTO request, Map<String, Object> vars, String tenantId) {
-        if (schemeHeader == null || schemeHeader.isBlank()) {
+        String scheme = schemeHeader == null ? "" : schemeHeader.trim().toLowerCase();
+        boolean rail = scheme.equals("swift") || scheme.equals("sibtel") || scheme.equals("mt");
+        if (!rail && !sameInstitution(request, tenantId)) {
             return null;
         }
-        String scheme = schemeHeader.trim().toLowerCase();
-        if (!scheme.equals("swift") && !scheme.equals("sibtel") && !scheme.equals("mt")) {
-            return null;
-        }
-        vars.put(PAYMENT_SCHEME, scheme);
-        if (request.getPayer() != null && request.getPayer().getPartyIdInfo() != null) {
-            vars.put("debtorAccount", railAccount(scheme, request.getPayer().getPartyIdInfo().getPartyIdentifier()));
-            vars.put("debtorName", request.getPayer().getName());
-        }
-        if (request.getPayee() != null && request.getPayee().getPartyIdInfo() != null) {
-            vars.put("creditorAccount", railAccount(scheme, request.getPayee().getPartyIdInfo().getPartyIdentifier()));
-            vars.put("creditorName", request.getPayee().getName());
-        }
-        if (request.getNote() != null) {
-            vars.put("narrative", request.getNote());
-        }
-        if (request.getAmount() != null) {
-            vars.put("amount", request.getAmount().getAmount());
-            vars.put("currency", request.getAmount().getCurrency());
+        if (rail) {
+            vars.put(PAYMENT_SCHEME, scheme);
+            if (request.getPayer() != null && request.getPayer().getPartyIdInfo() != null) {
+                vars.put("debtorAccount", railAccount(scheme, request.getPayer().getPartyIdInfo().getPartyIdentifier()));
+                vars.put("debtorName", request.getPayer().getName());
+            }
+            if (request.getPayee() != null && request.getPayee().getPartyIdInfo() != null) {
+                vars.put("creditorAccount", railAccount(scheme, request.getPayee().getPartyIdInfo().getPartyIdentifier()));
+                vars.put("creditorName", request.getPayee().getName());
+            }
+            if (request.getNote() != null) {
+                vars.put("narrative", request.getNote());
+            }
+            if (request.getAmount() != null) {
+                vars.put("amount", request.getAmount().getAmount());
+                vars.put("currency", request.getAmount().getCurrency());
+            }
         }
         String operation = null;
-        if (request.getCustomData() != null) {
+        if (rail && request.getCustomData() != null) {
             for (CustomData item : request.getCustomData()) {
                 if (item == null || item.getKey() == null) {
                     continue;
@@ -879,15 +879,28 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         }
         String processId;
         if ("swift".equals(scheme)) {
-            processId = "swift-international-transfer-{dfspid}";
+            processId = "swift_international_transfer-{dfspid}";
         } else if ("sibtel".equals(scheme)) {
-            processId = "sibtel-domestic-transfer-{dfspid}";
-        } else if ("refund".equalsIgnoreCase(operation)) {
+            processId = "sibtel_domestic_transfer-{dfspid}";
+        } else if ("mt".equals(scheme) && "refund".equalsIgnoreCase(operation)) {
             processId = "mt-card-refund-{dfspid}";
+        } else if ("mt".equals(scheme)) {
+            processId = "mt_card_payment-{dfspid}";
+        } else if (sameInstitution(request, tenantId)) {
+            processId = "internal_transfer-{dfspid}";
         } else {
-            processId = "mt-card-payment-{dfspid}";
+            return null;
         }
         return processId.replace("{dfspid}", tenantId);
+    }
+
+    /** On-us transfer: payer and payee are both this DFSP. */
+    private static boolean sameInstitution(TransactionChannelRequestDTO request, String tenantId) {
+        if (tenantId == null || request == null || request.getPayee() == null || request.getPayee().getPartyIdInfo() == null) {
+            return false;
+        }
+        String payeeFsp = request.getPayee().getPartyIdInfo().getFspId();
+        return tenantId.equalsIgnoreCase(payeeFsp);
     }
 
     /** SIBTEL clears a 20-digit RIB. A Tunisian IBAN is {@code TN} + 2 check digits + that RIB. */
