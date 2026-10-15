@@ -52,7 +52,7 @@ public class MtInboundController {
         };
         String amount = text(body.getOrDefault("amount", "0"));
         String currency = text(body.getOrDefault("currency", "TND"));
-        String pan = first(body.get("pan"), body.get("panToken"));
+        String pan = text(first(body.get("pan"), body.get("panToken")));
         String merchant = text(body.get("merchantId"));
         Map<String, Object> channelRequest = channelRequest(text(body.get("cardholderName")), pan, merchant, amount, currency);
         Map<String, Object> variables = new HashMap<>();
