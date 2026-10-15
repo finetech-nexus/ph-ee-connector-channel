@@ -65,6 +65,8 @@ public class MtInboundController {
         variables.put("merchantId", merchant);
         variables.put("operation", operation);
         variables.put("clientReference", text(body.get("clientReference")));
+        variables.put("authorizationId", text(body.get("authorizationId")));
+        variables.put("originalTransactionId", text(body.get("originalTransactionId")));
         variables.put("ecommerce", ecommerce(body));
         variables.put("partyIdType", "ACCOUNT_ID");
         variables.put("partyId", pan);
