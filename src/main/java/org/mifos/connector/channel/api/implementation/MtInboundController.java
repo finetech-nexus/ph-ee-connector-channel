@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Starts one Monétique Tunisie BPMN per inbound operation. mt-api is the only public entry:
- * the card switch never calls this connector directly.
+ * Starts one Monétique Tunisie BPMN per inbound operation. mt-api is the only public entry: the card switch never calls
+ * this connector directly.
  */
 @RestController
 @RequestMapping("/channel/mt")
@@ -83,18 +83,20 @@ public class MtInboundController {
         Map<String, Object> variables = new HashMap<>();
         variables.put("cardholderRejected", !accepted);
         variables.put("cardholderDecision", accepted ? "ACCEPTED" : "REJECTED");
-        zeebeClient.newPublishMessageCommand().messageName("cardholderDecision").correlationKey(transactionId).variables(variables)
-                .send().join();
+        zeebeClient.newPublishMessageCommand().messageName("cardholderDecision").correlationKey(transactionId).variables(variables).send()
+                .join();
         return Map.of("published", true, "transactionId", transactionId, "accepted", accepted);
     }
 
     private static Map<String, Object> channelRequest(String holder, String pan, String merchant, String amount, String currency) {
         Map<String, Object> payer = new LinkedHashMap<>();
         payer.put("name", holder.isBlank() ? "Cardholder" : holder);
-        payer.put("partyIdInfo", Map.of("partyIdType", "ACCOUNT_ID", "partyIdentifier", pan.isBlank() ? "UNKNOWN" : pan, "fspId", "nexusbank"));
+        payer.put("partyIdInfo",
+                Map.of("partyIdType", "ACCOUNT_ID", "partyIdentifier", pan.isBlank() ? "UNKNOWN" : pan, "fspId", "nexusbank"));
         Map<String, Object> payee = new LinkedHashMap<>();
         payee.put("name", merchant.isBlank() ? "Merchant" : merchant);
-        payee.put("partyIdInfo", Map.of("partyIdType", "ALIAS", "partyIdentifier", merchant.isBlank() ? "merchant" : merchant, "fspId", "mt"));
+        payee.put("partyIdInfo",
+                Map.of("partyIdType", "ALIAS", "partyIdentifier", merchant.isBlank() ? "merchant" : merchant, "fspId", "mt"));
         Map<String, Object> request = new LinkedHashMap<>();
         request.put("payer", payer);
         request.put("payee", payee);
