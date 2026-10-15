@@ -68,6 +68,13 @@ public class MtInboundController {
         variables.put("authorizationId", text(body.get("authorizationId")));
         variables.put("originalTransactionId", text(body.get("originalTransactionId")));
         variables.put("ecommerce", ecommerce(body));
+        variables.put("entryMode", text(first(body.get("entryMode"), body.get("channel"), body.get("posEntryMode"))));
+        variables.put("terminalId", text(body.get("terminalId")));
+        variables.put("awaitingDecision", body.get("awaitingDecision") == null || truth(body.get("awaitingDecision")));
+        if (body.containsKey("userConfirmed")) {
+            variables.put("userConfirmed", truth(body.get("userConfirmed")));
+        }
+        variables.put("confirmationRequired", body.containsKey("confirmationRequired") ? truth(body.get("confirmationRequired")) : ecommerce(body));
         variables.put("partyIdType", "ACCOUNT_ID");
         variables.put("partyId", pan);
         variables.put(ZeebeVariables.CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
@@ -105,6 +112,10 @@ public class MtInboundController {
         request.put("amount", Map.of("amount", amount, "currency", currency));
         request.put("note", "Monétique Tunisie card payment");
         return request;
+    }
+
+    private static boolean truth(Object value) {
+        return Boolean.TRUE.equals(value) || "true".equalsIgnoreCase(text(value));
     }
 
     private static boolean ecommerce(Map<String, Object> body) {
