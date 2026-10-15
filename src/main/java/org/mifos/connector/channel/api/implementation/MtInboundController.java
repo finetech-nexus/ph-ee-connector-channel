@@ -74,7 +74,8 @@ public class MtInboundController {
         if (body.containsKey("userConfirmed")) {
             variables.put("userConfirmed", truth(body.get("userConfirmed")));
         }
-        variables.put("confirmationRequired", body.containsKey("confirmationRequired") ? truth(body.get("confirmationRequired")) : ecommerce(body));
+        variables.put("confirmationRequired",
+                body.containsKey("confirmationRequired") ? truth(body.get("confirmationRequired")) : ecommerce(body));
         variables.put("partyIdType", "ACCOUNT_ID");
         variables.put("partyId", pan);
         variables.put(ZeebeVariables.CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
