@@ -82,6 +82,10 @@ public class MtInboundController {
         variables.put("initiator", "PAYER");
         variables.put("initiatorType", "CONSUMER");
         variables.put("scenario", "PAYMENT");
+        String holdTransferCode = text(first(body.get("holdTransferCode"), body.get("transferCode")));
+        if (!holdTransferCode.isBlank()) {
+            variables.put("transferCode", holdTransferCode);
+        }
         variables.put("partyIdType", "ACCOUNT_ID");
         variables.put("partyId", pan);
         variables.put(ZeebeVariables.CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
