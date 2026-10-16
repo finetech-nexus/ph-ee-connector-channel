@@ -74,8 +74,14 @@ public class MtInboundController {
         if (body.containsKey("userConfirmed")) {
             variables.put("userConfirmed", truth(body.get("userConfirmed")));
         }
+        if (body.containsKey("expired")) {
+            variables.put("expired", truth(body.get("expired")));
+        }
         variables.put("confirmationRequired",
                 body.containsKey("confirmationRequired") ? truth(body.get("confirmationRequired")) : ecommerce(body));
+        variables.put("initiator", "PAYER");
+        variables.put("initiatorType", "CONSUMER");
+        variables.put("scenario", "PAYMENT");
         variables.put("partyIdType", "ACCOUNT_ID");
         variables.put("partyId", pan);
         variables.put(ZeebeVariables.CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
