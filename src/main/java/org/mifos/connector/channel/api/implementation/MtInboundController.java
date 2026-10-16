@@ -86,6 +86,7 @@ public class MtInboundController {
         if (!holdTransferCode.isBlank()) {
             variables.put("transferCode", holdTransferCode);
         }
+        variables.put("partialCapture", truth(body.get("partialCapture")));
         variables.put("partyIdType", "ACCOUNT_ID");
         variables.put("partyId", pan);
         variables.put(ZeebeVariables.CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
